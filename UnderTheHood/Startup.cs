@@ -24,7 +24,20 @@ namespace UnderTheHood
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddRazorPages();
-            services.AddAuthentication().AddCookie("MyCookieAuth");
+            services.AddAuthentication("MyCookieAuth").AddCookie("MyCookieAuth",options =>
+            {
+                options.Cookie.Name = "MyCookieAuth";
+                options.LoginPath = "/Account/Login";
+                options.AccessDeniedPath = "/Account/AccessDenied";
+            });
+
+            services.AddAuthorization(options =>
+            {
+                options.AddPolicy("MustBelongToHRDepartment", policy =>
+                {
+                    policy.RequireClaim("Department", "HR");
+                });
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -46,6 +59,7 @@ namespace UnderTheHood
 
             app.UseRouting();
 
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
