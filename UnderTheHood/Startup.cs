@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -8,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using UnderTheHood.Authorization;
 
 namespace UnderTheHood
 {
@@ -33,11 +35,21 @@ namespace UnderTheHood
 
             services.AddAuthorization(options =>
             {
+                options.AddPolicy("AdminOnly",
+                    policy => policy.RequireClaim("Admin"));
+
                 options.AddPolicy("MustBelongToHRDepartment", policy =>
                 {
                     policy.RequireClaim("Department", "HR");
                 });
+
+                options.AddPolicy("HRManagerOnly", policy => policy
+                            .RequireClaim("Department", "HR")
+                            .RequireClaim("Manager")
+                            .Requirements.Add(new HRManagerProbationRequirement(3)));
             });
+
+            services.AddSingleton<IAuthorizationHandler, HRManagerProbationRequirementHandler>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
